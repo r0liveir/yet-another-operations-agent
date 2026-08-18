@@ -1,6 +1,6 @@
 ---
 id: runbook-slow-images
-title: Runbook: slow product images
+title: Runbook - slow product images
 type: runbook
 service: frontend
 source: synthetic-learning-doc

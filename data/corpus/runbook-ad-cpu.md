@@ -1,6 +1,6 @@
 ---
 id: runbook-ad-cpu
-title: Runbook: ad service CPU pressure
+title: Runbook - ad service CPU pressure
 type: runbook
 service: ad
 source: synthetic-learning-doc

@@ -1,6 +1,6 @@
 ---
 id: runbook-cart-readiness
-title: Runbook: cart readiness and failures
+title: Runbook - cart readiness and failures
 type: runbook
 service: cart
 source: synthetic-learning-doc

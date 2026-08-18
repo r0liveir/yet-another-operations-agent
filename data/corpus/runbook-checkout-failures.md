@@ -1,6 +1,6 @@
 ---
 id: runbook-checkout-failures
-title: Runbook: checkout failures
+title: Runbook - checkout failures
 type: runbook
 service: checkout
 source: synthetic-learning-doc

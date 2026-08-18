@@ -1,6 +1,6 @@
 ---
 id: incident-payment-outage-001
-title: Incident 001: simulated payment outage
+title: Incident 001 - simulated payment outage
 type: incident
 service: payment
 date: 2026-08-18

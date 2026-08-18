@@ -1,6 +1,6 @@
 ---
 id: ticket-recommendation-cache-003
-title: Ticket 003: investigate recommendation degradation
+title: Ticket 003 - investigate recommendation degradation
 type: ticket
 service: recommendation
 source: synthetic-learning-doc

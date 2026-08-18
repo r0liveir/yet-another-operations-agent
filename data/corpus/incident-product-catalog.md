@@ -1,6 +1,6 @@
 ---
 id: incident-product-catalog-002
-title: Incident 002: targeted product catalog fault
+title: Incident 002 - targeted product catalog fault
 type: incident
 service: product-catalog
 date: 2026-08-18
