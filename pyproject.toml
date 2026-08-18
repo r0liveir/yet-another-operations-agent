@@ -4,4 +4,10 @@ version = "0.1.0"
 description = "A toy operations agent"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "asyncpg>=0.31.0",
+    "dotenv>=0.9.9",
+    "ollama>=0.6.2",
+    "pyyaml>=6.0.3",
+    "ruff>=0.16.3",
+]
