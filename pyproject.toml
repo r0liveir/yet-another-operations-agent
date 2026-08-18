@@ -1,0 +1,7 @@
+[project]
+name = "operations-agent"
+version = "0.1.0"
+description = "A toy operations agent"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
