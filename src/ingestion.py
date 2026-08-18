@@ -3,9 +3,9 @@ import logging
 import os
 
 import asyncpg
-import ollama
 import yaml
 from dotenv import load_dotenv
+from ollama import AsyncClient
 
 load_dotenv("../.env")
 
@@ -69,9 +69,11 @@ async def retrieve(query: str, limit: int = 3):
     conn = await asyncpg.connect(DATABASE_URL)
 
     # create the embedding for the query, same embedding used when ingesting and inserting docs
-    query_embedding = ollama.embed(model=EMBED_MODEL, input=query)["embeddings"][0]
+    query_embedding = await AsyncClient().embed(model=EMBED_MODEL, input=query)
+    embeddings = query_embedding.get("embeddings")[0]
+
     logger.debug(f"[Query done] {query}")
-    logger.debug(f"[Embedding of query] {query_embedding}")
+    logger.debug(f"[Embedding of query] {embeddings}")
 
     sql_query = """
     select doc_title, source, content,
@@ -81,7 +83,7 @@ async def retrieve(query: str, limit: int = 3):
     limit $2
     """
 
-    rows = await conn.fetch(sql_query, str(query_embedding), limit)
+    rows = await conn.fetch(sql_query, str(embeddings), limit)
 
     print(f"Top {limit} matches for the query:")
     for r in rows:
@@ -101,9 +103,9 @@ async def ingest_docs(docs_dir: str):
 
     sql_insertion_query = """
     insert into document_chunks
-        (doc_id, doc_title, doc_type, service, source, content, embedding)
+        (doc_id, doc_title, doc_type, service, source, content, chunk_index, embedding)
     VALUES
-        ($1, $2, $3, $4, $5, $6, $7)
+        ($1, $2, $3, $4, $5, $6, $7, $8)
     """
 
     files = glob.glob(f"{docs_dir}/**/*.md", recursive=True)
@@ -118,9 +120,13 @@ async def ingest_docs(docs_dir: str):
             continue
 
         # generate embeddings locally, using batch
-        embeddings = ollama.embed(model=EMBED_MODEL, input=chunks)
+        embeddings = await AsyncClient().embed(model=EMBED_MODEL, input=chunks)
 
         logger.debug(f"[Chunks and embeddings parsed]: {chunks}\n{embeddings}")
+
+        await conn.execute(
+            "DELETE FROM document_chunks WHERE doc_id = $1", metadata.get("doc_id")
+        )
 
         for i in range(len(chunks)):
             await conn.execute(
@@ -131,6 +137,7 @@ async def ingest_docs(docs_dir: str):
                 metadata.get("service", ""),
                 metadata.get("source", ""),
                 chunks[i],
+                i,
                 str(embeddings.embeddings[i]),
             )
 
