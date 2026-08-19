@@ -83,7 +83,7 @@ async def retrieve(query: str, conn: asyncpg.Pool, logger: Logger, limit: int = 
         print("---\n")
 
 
-async def ingest_docs(docs_dir: str, conn: asyncpg.Connection, logger: Logger):
+async def ingest_docs(docs_dir: str, conn: asyncpg.Pool, logger: Logger):
     """Function for ingesting docs at once
     This may be improved by using LangChain, see more at:
     https://www.datacamp.com/tutorial/pgvector-tutorial"""

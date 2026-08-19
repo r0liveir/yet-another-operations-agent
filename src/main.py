@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import asyncpg
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ from fastapi import BackgroundTasks, Depends, FastAPI, Request
 
 import ingestion
 
-load_dotenv("../.env")
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 # defines a lifespan for the app

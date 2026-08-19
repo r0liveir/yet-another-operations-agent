@@ -1,11 +1,33 @@
 import argparse
 import asyncio
 import logging
+import os
+from pathlib import Path
+
+import asyncpg
+from dotenv import load_dotenv
 
 import ingestion
 
+# Initial config
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+database_url = os.getenv("DATABASE_URL")
+docs_dir = os.getenv("DOCS_DIR")
+
+pool: asyncpg.Pool = None  # type:ignore
+logging.basicConfig(level=logging.INFO, filename="app.log", filemode="w")
+logger = logging.getLogger(__name__)
+
+
+async def init_db():
+    global pool
+    global database_url
+    pool = await asyncpg.create_pool(dsn=database_url, min_size=5, max_size=20)
+
 
 async def main():
+    global logger
+    await init_db()
     parser = argparse.ArgumentParser(
         prog="CLI for RAG ingestor",
         description="CLI that uses ingestion module and a query, and returns results of documents, etc",
@@ -30,12 +52,12 @@ async def main():
 
     args = parser.parse_args()
     if args.debug:
-        ingestion.logger.level = logging.DEBUG
+        logger.level = logging.DEBUG
 
     if args.command == "ingest":
-        await ingestion.ingest_docs(args.dir)
+        await ingestion.ingest_docs(docs_dir=args.dir, conn=pool, logger=logger)
     elif args.command == "retrieve":
-        await ingestion.retrieve(args.query)
+        await ingestion.retrieve(query=args.query, conn=pool, logger=logger)
 
 
 if __name__ == "__main__":
