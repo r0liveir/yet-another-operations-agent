@@ -11,8 +11,10 @@ create table if not exists document_chunks (
 	service text not null,
 	source text not null,
 	content text not null,
+	chunk_index int not null,
 	embedding vector(768), -- must match dimensions of the embedding model
-	created_at timestamptz default now()
+	created_at timestamptz default now(),
+	unique (doc_id, chunk_index)
 );
 
 -- indexing that makes similarity searches fast
