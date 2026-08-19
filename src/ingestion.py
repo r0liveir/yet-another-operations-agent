@@ -1,11 +1,25 @@
 import glob
+import logging
 from logging import Logger
 
 import asyncpg
 import yaml
 from ollama import AsyncClient
 
+from models import Citation, QueryResponse
+
 EMBED_MODEL = "nomic-embed-text"
+LANGUAGE_MODEL = "qwen3.5:2b"
+
+PROMPT_TEMPLATE = """
+You are an assistant for question-answering tasks.
+Use the following documents to answer the question.
+For the output, citations is a list of citation IDs in strings.
+Keep answers at most five sentences.
+You must cite every `answered` response.
+Never return `answered` with empty citations.
+Use `needs_more_data` only when supplied context cannot answer question; citations must then be empty.
+"""
 
 
 def parse_markdown_file(file_path: str, logger: Logger) -> tuple[dict, str]:
@@ -53,7 +67,9 @@ def chunk_markdown(metadata: dict, body: str, max_chars: int = 800) -> list[str]
     return chunks
 
 
-async def retrieve(query: str, conn: asyncpg.Pool, logger: Logger, limit: int = 3):
+async def retrieve(
+    query: str, conn: asyncpg.Pool, logger: Logger, limit: int = 3
+) -> list[Citation]:
     """Retrieval function for our document_chunks db
     This is RAG!
     """
@@ -66,21 +82,23 @@ async def retrieve(query: str, conn: asyncpg.Pool, logger: Logger, limit: int = 
     logger.debug(f"[Embedding of query] {embeddings}")
 
     sql_query = """
-    select doc_title, source, content,
+    select doc_title, chunk_index, source, content,
         1 - (embedding <=> $1) as similarity
     from document_chunks
     order by embedding <=> $1
     limit $2
     """
-
     rows = await conn.fetch(sql_query, str(embeddings), limit)
 
-    print(f"Top {limit} matches for the query:")
-    for r in rows:
-        print("---")
-        print(f"title: {r['doc_title']}, similarity: {r['similarity']}")
-        print(r["content"])
-        print("---\n")
+    if logger.level == logging.DEBUG:
+        logger.debug(f"Top {limit} matches for the query:")
+        for r in rows:
+            logger.debug("---")
+            logger.debug(f"title: {r['doc_title']}, similarity: {r['similarity']}")
+            logger.debug(r["content"])
+            logger.debug("---\n")
+
+    return [Citation.model_validate(dict(r)) for r in rows]
 
 
 async def ingest_docs(docs_dir: str, conn: asyncpg.Pool, logger: Logger):
@@ -131,3 +149,28 @@ async def ingest_docs(docs_dir: str, conn: asyncpg.Pool, logger: Logger):
             )
 
         print(f"Indexed {metadata.get('title', '')} - {len(chunks)} chunks")
+
+
+async def query_llm(query: str, citations: dict[str, Citation]):
+    system_message = (
+        PROMPT_TEMPLATE
+        + f"""
+    You may use the following citations: 
+    {citations}
+    """
+    )
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": query},
+    ]
+
+    client = AsyncClient()
+    response = await client.chat(
+        model=LANGUAGE_MODEL,
+        messages=messages,
+        format=QueryResponse.model_json_schema(),
+        think=False,
+        options={"temperature": 0, "seed": 67},
+    )
+
+    return response

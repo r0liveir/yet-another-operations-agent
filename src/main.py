@@ -5,9 +5,10 @@ from pathlib import Path
 
 import asyncpg
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, Depends, FastAPI, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 
 import ingestion
+from models import QueryFilter, QueryResponse
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -63,4 +64,32 @@ async def ingest_documents(
     logger: logging.Logger = Depends(get_logger),
 ):
     background_tasks.add_task(ingestion.ingest_docs, docs_dir, db, logger)
-    return {"message": "Ingestion started in the background"}
+    return {"message": "Ingestion scheduled in the background"}
+
+
+@app.post("/query")
+async def query_existing_documents(
+    query_payload: QueryFilter,
+    db: asyncpg.Pool = Depends(get_db_connection),
+    logger: logging.Logger = Depends(get_logger),
+):
+    chunks = await ingestion.retrieve(
+        query=query_payload.query, conn=db, logger=logger, limit=query_payload.k
+    )
+
+    chunks_dict = {}
+    for i, c in enumerate(chunks):
+        chunks_dict[f"C{i}"] = c
+
+    response = await ingestion.query_llm(
+        query=query_payload.query, citations=chunks_dict
+    )
+
+    # validate model response here
+    if response.message.content is None:
+        raise ValueError("Ollama returned empty response")
+    result = QueryResponse.model_validate_json(response.message.content)
+    if result.status == "answered" and not result.citations:
+        raise HTTPException(502, "Model answered without citations")
+
+    return QueryResponse.model_validate_json(response.message.content)
