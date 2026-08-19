@@ -1,23 +1,14 @@
 import glob
-import logging
-import os
+from logging import Logger
 
 import asyncpg
 import yaml
-from dotenv import load_dotenv
 from ollama import AsyncClient
 
-load_dotenv("../.env")
-
 EMBED_MODEL = "nomic-embed-text"
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-# basic log config for us to see later
-logging.basicConfig(level=logging.INFO, filename="app.log", filemode="w")
-logger = logging.getLogger(__name__)
 
 
-def parse_markdown_file(file_path: str) -> tuple[dict, str]:
+def parse_markdown_file(file_path: str, logger: Logger) -> tuple[dict, str]:
     """Extract YAML frontmatter metadata and body content"""
     with open(file_path, "r", encoding="utf-8") as file:
         content = file.read()
@@ -62,11 +53,10 @@ def chunk_markdown(metadata: dict, body: str, max_chars: int = 800) -> list[str]
     return chunks
 
 
-async def retrieve(query: str, limit: int = 3):
+async def retrieve(query: str, conn: asyncpg.Pool, logger: Logger, limit: int = 3):
     """Retrieval function for our document_chunks db
     This is RAG!
     """
-    conn = await asyncpg.connect(DATABASE_URL)
 
     # create the embedding for the query, same embedding used when ingesting and inserting docs
     query_embedding = await AsyncClient().embed(model=EMBED_MODEL, input=query)
@@ -92,14 +82,11 @@ async def retrieve(query: str, limit: int = 3):
         print(r["content"])
         print("---\n")
 
-    await conn.close()
 
-
-async def ingest_docs(docs_dir: str):
+async def ingest_docs(docs_dir: str, conn: asyncpg.Connection, logger: Logger):
     """Function for ingesting docs at once
     This may be improved by using LangChain, see more at:
     https://www.datacamp.com/tutorial/pgvector-tutorial"""
-    conn = await asyncpg.connect(DATABASE_URL)
 
     sql_insertion_query = """
     insert into document_chunks
@@ -113,7 +100,7 @@ async def ingest_docs(docs_dir: str):
     for file_path in files:
         logger.debug(f"Now working with {file_path}")
 
-        metadata, body = parse_markdown_file(file_path)
+        metadata, body = parse_markdown_file(file_path, logger)
 
         chunks = chunk_markdown(metadata, body)
         if not chunks:
@@ -124,9 +111,11 @@ async def ingest_docs(docs_dir: str):
 
         logger.debug(f"[Chunks and embeddings parsed]: {chunks}\n{embeddings}")
 
-        await conn.execute(
-            "DELETE FROM document_chunks WHERE doc_id = $1", metadata.get("doc_id")
+        res = await conn.execute(
+            "DELETE FROM document_chunks WHERE doc_id = $1", metadata.get("id")
         )
+
+        logger.debug(f"[Chunks deleted]: {res}")
 
         for i in range(len(chunks)):
             await conn.execute(
@@ -142,5 +131,3 @@ async def ingest_docs(docs_dir: str):
             )
 
         print(f"Indexed {metadata.get('title', '')} - {len(chunks)} chunks")
-
-    await conn.close()
