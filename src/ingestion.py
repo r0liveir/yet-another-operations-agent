@@ -152,6 +152,7 @@ async def ingest_docs(docs_dir: str, conn: asyncpg.Pool, logger: Logger):
 
 
 async def query_llm(query: str, citations: dict[str, Citation]):
+    """Deterministic-ish queries regarding existing documents"""
     system_message = (
         PROMPT_TEMPLATE
         + f"""
