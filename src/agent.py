@@ -8,6 +8,7 @@ from pathlib import Path
 import asyncpg
 from dotenv import load_dotenv
 from pydantic_ai import Agent, Capability, RunContext, UsageLimits
+from pydantic_ai.models.groq import GroqModel
 from pydantic_ai.tools import ToolDefinition
 
 import ingestion
@@ -67,9 +68,10 @@ async def search_docs(
     ]
 
 
-# our Gemini agent
+model = GroqModel(model_name="llama-3.3-70b-versatile")
+
 agent = Agent(
-    model="ollama:qwen3.5:2b",
+    model=model,
     deps_type=Dependencies,
     output_type=QueryResponse,
     instructions=(
