@@ -1,16 +1,16 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from logging import Logger
 from typing import Literal
 
 from asyncpg import Pool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 @dataclass
 class Dependencies:
     logger: Logger
     pool: Pool
-    citations: dict[str, dict] = Field(default_factory=dict)
+    citations: dict[str, dict] = field(default_factory=dict)
 
 
 # Models

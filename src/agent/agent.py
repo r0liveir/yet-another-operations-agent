@@ -5,9 +5,10 @@ import asyncpg
 from pydantic_ai import Agent, UsageLimits
 from pydantic_ai.models.groq import GroqModel
 
-from agent.tools import search_docs
 from config import settings
 from models import Dependencies, QueryResponse
+
+from .tools import search_docs
 
 
 class OperationsAgent:
@@ -28,7 +29,8 @@ class OperationsAgent:
                 "no longer available. For an answered response, `citations` must contain "
                 "only the returned `citation_id` values (such as `C0`). If the retrieved "
                 "chunks cannot answer the question, return status `needs_more_data` with "
-                "an empty citations list."
+                "an empty citations list. "
+                "Keep your answer short to, at most, 2 paragraphs."
             ),
         )
         self.agent.tool(search_docs)

@@ -15,7 +15,8 @@ operations_agent = OperationsAgent()
 # defines a lifespan for the app
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logging.basicConfig(level=logging.INFO, filename="app.log", filemode="w")
+    level = logging.DEBUG if settings.log_debug_mode == "DEBUG" else logging.INFO
+    logging.basicConfig(level=level, filename="app.log", filemode="w")
     app.state.logger = logging.getLogger(__name__)
 
     app.state.docs_dir = settings.docs_dir

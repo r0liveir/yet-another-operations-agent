@@ -23,6 +23,7 @@ class Settings:
     embed_model: str
     language_model: str
     groq_model: str
+    log_debug_mode: str
 
 
 settings = Settings(
@@ -30,5 +31,6 @@ settings = Settings(
     docs_dir=_required("DOCS_DIR"),
     embed_model=os.getenv("EMBED_MODEL", "nomic-embed-text"),
     language_model=os.getenv("LANGUAGE_MODEL", "qwen3.5:2b"),
-    groq_model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+    groq_model=os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"),
+    log_debug_mode=os.getenv("LOG_LEVEL", "INFO"),
 )

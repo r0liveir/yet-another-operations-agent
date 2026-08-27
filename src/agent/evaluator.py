@@ -12,10 +12,11 @@ from pydantic_evals.evaluators import (
     ToolCorrectness,
 )
 
-from agent.agent import OperationsAgent
 from config import settings
 from knowledge_base.markdown import parse_markdown_file
 from models import Dependencies, QueryResponse
+
+from .agent import OperationsAgent
 
 
 @dataclass
