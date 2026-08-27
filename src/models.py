@@ -23,3 +23,9 @@ class QueryResponse(BaseModel):
     answer: str
     citations: list[str]
     status: Literal["answered", "needs_more_data"]
+
+
+class RetrievedCitation(Citation):
+    """A retrieved chunk with the stable ID the agent must return to callers."""
+
+    citation_id: str

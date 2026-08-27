@@ -1,16 +1,13 @@
 import logging
-import os
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 import asyncpg
-from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 
-import ingestion
+from config import settings
+from knowledge_base.answering import query_llm
+from knowledge_base.rag import ingest_docs, retrieve
 from models import QueryFilter, QueryResponse
-
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 # defines a lifespan for the app
@@ -19,10 +16,9 @@ async def lifespan(app: FastAPI):
     logging.basicConfig(level=logging.INFO, filename="app.log", filemode="w")
     app.state.logger = logging.getLogger(__name__)
 
-    database_url = os.getenv("DATABASE_URL")
-    app.state.docs_dir = os.getenv("DOCS_DIR")
+    app.state.docs_dir = settings.docs_dir
     app.state.pool = await asyncpg.create_pool(
-        dsn=database_url, min_size=5, max_size=20
+        dsn=settings.database_url, min_size=5, max_size=20
     )
     yield
 
@@ -63,7 +59,7 @@ async def ingest_documents(
     docs_dir: str = Depends(get_docs_dir),
     logger: logging.Logger = Depends(get_logger),
 ):
-    background_tasks.add_task(ingestion.ingest_docs, docs_dir, db, logger)
+    background_tasks.add_task(ingest_docs, docs_dir, db, logger)
     return {"message": "Ingestion scheduled in the background"}
 
 
@@ -73,7 +69,7 @@ async def query_existing_documents(
     db: asyncpg.Pool = Depends(get_db_connection),
     logger: logging.Logger = Depends(get_logger),
 ):
-    chunks = await ingestion.retrieve(
+    chunks = await retrieve(
         query=query_payload.query, conn=db, logger=logger, limit=query_payload.k
     )
 
@@ -81,9 +77,7 @@ async def query_existing_documents(
     for i, c in enumerate(chunks):
         chunks_dict[f"C{i}"] = c
 
-    response = await ingestion.query_llm(
-        query=query_payload.query, citations=chunks_dict
-    )
+    response = await query_llm(query=query_payload.query, citations=chunks_dict)
 
     # validate model response here
     if response.message.content is None:
