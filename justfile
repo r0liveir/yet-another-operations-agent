@@ -1,4 +1,4 @@
-.PHONY: start-db stop-db run-api
+set default-list := true
 
 start-db:
 	docker compose up -d 
@@ -8,3 +8,6 @@ stop-db:
 
 run-api:
 	PYTHONPATH=src uv run fastapi dev src/cmd/api.py
+
+run-evaluator:
+	PYTHONPATH=src uv run python -m agent.evaluator
