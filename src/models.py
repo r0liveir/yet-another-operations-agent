@@ -1,6 +1,16 @@
+from dataclasses import dataclass
+from logging import Logger
 from typing import Literal
 
+from asyncpg import Pool
 from pydantic import BaseModel
+
+
+@dataclass
+class Dependencies:
+    logger: Logger
+    pool: Pool
+    citations: dict[str, dict]
 
 
 # Models
@@ -25,7 +35,7 @@ class QueryResponse(BaseModel):
     status: Literal["answered", "needs_more_data"]
 
 
-class RetrievedCitation(Citation):
-    """A retrieved chunk with the stable ID the agent must return to callers."""
-
-    citation_id: str
+class QueryAPIResponse(BaseModel):
+    answer: str
+    citations: dict[str, dict]
+    status: Literal["answered", "needs_more_data"]

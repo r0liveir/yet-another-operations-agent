@@ -10,6 +10,7 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "ollama>=0.6.2",
     "pydantic-ai>=2.32.0",
+    "pydantic-evals[logfire]>=2.32.0",
     "pyyaml>=6.0.3",
     "ruff>=0.16.3",
 ]

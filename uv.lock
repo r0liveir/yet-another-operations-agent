@@ -1426,6 +1426,7 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "ollama" },
     { name = "pydantic-ai" },
+    { name = "pydantic-evals", extra = ["logfire"] },
     { name = "pyyaml" },
     { name = "ruff" },
 ]
@@ -1437,6 +1438,7 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
     { name = "ollama", specifier = ">=0.6.2" },
     { name = "pydantic-ai", specifier = ">=2.32.0" },
+    { name = "pydantic-evals", extras = ["logfire"], specifier = ">=2.32.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", specifier = ">=0.16.3" },
 ]
@@ -1715,6 +1717,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ab/7f/d80d5c663bbb0e88e669a32f16d9ac652434bd59ec8da1c934604d5cf038/pydantic_evals-2.32.0.tar.gz", hash = "sha256:c5da4c036ba891a07958ac623ab226c3048cf614b2422fa31fce1042d37086fd", size = 86725, upload-time = "2026-08-19T04:02:54.642Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d4/e2/8414d2bc6583436b973282f6e867ab30548c82fb4d813ddd754d3bc4db0f/pydantic_evals-2.32.0-py3-none-any.whl", hash = "sha256:64e1b6fc2510eed8f529a0214e93d6d58c6265eacf585efb01889d96c908e420", size = 101914, upload-time = "2026-08-19T04:02:48.446Z" },
+]
+
+[package.optional-dependencies]
+logfire = [
+    { name = "logfire" },
 ]
 
 [[package]]

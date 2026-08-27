@@ -5,7 +5,9 @@ from logging import Logger
 import yaml
 
 
-def parse_markdown_file(file_path: str, logger: Logger) -> tuple[dict, str]:
+def parse_markdown_file(
+    file_path: str, logger: Logger | None = None
+) -> tuple[dict, str]:
     """Extract YAML frontmatter metadata and body content."""
     with open(file_path, encoding="utf-8") as file:
         content = file.read()
@@ -18,7 +20,8 @@ def parse_markdown_file(file_path: str, logger: Logger) -> tuple[dict, str]:
             metadata = yaml.safe_load(parts[1]) or {}
             body = parts[2].strip()
 
-    logger.debug("[Markdown file parsed]: %s\n%s", metadata, body[:100])
+    if logger:
+        logger.debug("[Markdown file parsed]: %s\n%s", metadata, body[:100])
     return metadata, body
 
 
