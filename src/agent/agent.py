@@ -24,10 +24,11 @@ class OperationsAgent:
                 "After the tool result, synthesize only the returned chunks; the tool is "
                 "no longer available. For an answered response, `citations` must contain "
                 "only the returned `citation_id` values (such as `C0`). If the retrieved "
-                "chunks cannot answer the question, return status `needs_more_data` with "
-                "an empty citations list. "
+                "chunks cannot answer the question, return `citations` empty list, and "
+                "'Cannot establish a response for retrieved data', with status `needs_more_data`"
                 "Keep your answer short to, at most, 2 paragraphs."
             ),
+            retries=2,
         )
         self.agent.tool(search_docs)
 
