@@ -3,18 +3,19 @@ from logging import Logger
 from typing import Literal
 
 from asyncpg import Pool
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 @dataclass
 class Dependencies:
     logger: Logger
     pool: Pool
-    citations: dict[str, dict]
+    citations: dict[str, dict] = Field(default_factory=dict)
 
 
 # Models
 class Citation(BaseModel):
+    doc_id: str
     doc_title: str
     source: str
     content: str

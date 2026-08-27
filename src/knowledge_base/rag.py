@@ -22,7 +22,7 @@ async def retrieve(
 
     logger.debug("[Query done] %s", query)
     sql_query = """
-    SELECT doc_title, chunk_index, source, content,
+    SELECT doc_id, doc_title, chunk_index, source, content,
         1 - (embedding <=> $1) AS similarity
     FROM document_chunks
     ORDER BY embedding <=> $1
