@@ -1,9 +1,10 @@
 import asyncio
-import glob
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 import asyncpg
+import logfire
 from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import (
     Evaluator,
@@ -51,6 +52,9 @@ class EvidenceEvaluator(Evaluator):
 
 
 async def main():
+    logfire.configure(send_to_logfire=False)
+    logfire.instrument_pydantic_ai()
+
     logging.basicConfig(level=logging.INFO, filename="app.log", filemode="w")
     logger = logging.getLogger(__name__)
     pool = await asyncpg.create_pool(dsn=settings.database_url, min_size=5, max_size=20)
@@ -58,8 +62,10 @@ async def main():
     files: list[dict] = []
     operations_agent = OperationsAgent()
 
-    for file_path in glob.glob("../../data/scenarios/*.md"):
-        metadata, _ = parse_markdown_file(file_path)
+    scenario_dir = Path(__file__).resolve().parents[2] / "data" / "scenarios"
+
+    for file_path in scenario_dir.glob("*.md"):
+        metadata, _ = parse_markdown_file(str(file_path))
         files.append(metadata)
 
     cases: list[Case] = []
@@ -70,7 +76,7 @@ async def main():
                 name=scenario["id"],
                 inputs=scenario["question"],
                 metadata=ScenarioExpectation(
-                    expected_status=scenario["status"],
+                    expected_status=scenario["expected_status"],
                     expected_document_ids=set(scenario["expected_document_ids"]),
                 ),
             )
@@ -92,7 +98,12 @@ async def main():
         return await operations_agent.run(question, deps)
 
     report = await dataset.evaluate(run_agent, max_concurrency=1)
-    report.print()
+    report.print(
+        include_input=True,
+        include_output=True,
+        include_expected_output=True,
+        include_total_duration=True,
+    )
 
     await pool.close()
 

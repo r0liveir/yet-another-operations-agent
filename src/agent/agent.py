@@ -1,7 +1,3 @@
-import asyncio
-import logging
-
-import asyncpg
 from pydantic_ai import Agent, UsageLimits
 from pydantic_ai.models.groq import GroqModel
 
@@ -38,20 +34,3 @@ class OperationsAgent:
     async def run(self, query: str, deps: Dependencies) -> QueryResponse:
         result = await self.agent.run(query, deps=deps, usage_limits=self.limits)
         return result.output
-
-
-async def main():
-    logging.basicConfig(level=logging.INFO, filename="app.log", filemode="w")
-    logger = logging.getLogger(__name__)
-    pool = await asyncpg.create_pool(dsn=settings.database_url, min_size=5, max_size=20)
-
-    # deps = Dependencies(logger=logger, pool=pool)
-    # result = await agent.run(
-    #    "What is the architecture of the project?", deps=deps, usage_limits=limits
-    # )
-    # print(result.output)
-
-
-if __name__ == "__main__":
-    print("Now running main")
-    asyncio.run(main())
